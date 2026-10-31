@@ -1,0 +1,42 @@
+{
+  "name": "proctor-forge-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PROCTOR-FORGE: Portfolio-Driven Adaptive Coding & Technical Assessment Platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "cpu-features",
+      "esbuild",
+      "protobufjs",
+      "ssh2"
+    ]
+  },
+  "scripts": {
+    "build": "pnpm --recursive run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "pnpm --recursive run typecheck",
+    "dev:web": "pnpm.cmd --filter @proctor-forge/web dev",
+    "dev:runner": "pnpm.cmd --filter @proctor-forge/runner dev",
+    "dev": "concurrently \"pnpm.cmd run dev:runner\" \"pnpm.cmd run dev:web\"",
+    "emulators": "firebase emulators:start --import=./emulator-data --export-on-exit",
+    "validate-bank": "tsx scripts/validate-bank.ts",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "concurrently": "^8.2.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

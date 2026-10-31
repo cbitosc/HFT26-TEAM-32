@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+*.log
+.env
+.env.local
+.env.*.local
+emulator-data/
+coverage/
+.turbo/
+.DS_Store
+Thumbs.db
+

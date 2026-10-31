@@ -1,0 +1,37 @@
+{
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "architectures": [
+    "SCMP_ARCH_X86_64",
+    "SCMP_ARCH_X86",
+    "SCMP_ARCH_AARCH64"
+  ],
+  "syscalls": [
+    {
+      "names": [
+        "ptrace",
+        "process_vm_readv",
+        "process_vm_writev",
+        "sys_chroot",
+        "reboot",
+        "kexec_load",
+        "kexec_file_load",
+        "bpf",
+        "mount",
+        "umount2",
+        "pivot_root",
+        "keyctl",
+        "add_key",
+        "request_key",
+        "iopl",
+        "ioperm",
+        "acct",
+        "settimeofday",
+        "stime",
+        "clock_settime"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "args": []
+    }
+  ]
+}
+

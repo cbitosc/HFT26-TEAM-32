@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isCandidate(candidateId) {
+      return isAuthenticated() && request.auth.uid == candidateId;
+    }
+
+    function isRecruiter() {
+      return isAuthenticated() && request.auth.token.role == 'recruiter';
+    }
+
+    // Server-Only Collections (DENY ALL for clients)
+    match /taskSecrets/{taskId} {
+      allow read, write: if false;
+    }
+    match /validationReports/{taskId} {
+      allow read, write: if false;
+    }
+    match /assistantLogsRaw/{logId} {
+      allow read, write: if false;
+    }
+    match /taskCache/{cacheKey} {
+      allow read, write: if false;
+    }
+    match /pipelineStates/{assessmentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // Assessments collection
+    match /assessments/{assessmentId} {
+      // Candidate can read only their own assessment
+      allow read: if isAuthenticated() && (resource.data.candidateId == request.auth.uid || isRecruiter());
+      
+      // Client cannot write directly to scores, timers, or pipeline state
+      allow update: if isAuthenticated() && 
+        resource.data.candidateId == request.auth.uid &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'serverDeadline', 'reportId']);
+      
+      allow create, delete: if false;
+
+      // Telemetry events subcollection (append-only by candidate)
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (get(/databases/$(database)/documents/assessments/$(assessmentId)).data.candidateId == request.auth.uid || isRecruiter());
+        allow create: if isAuthenticated() && 
+          get(/databases/$(database)/documents/assessments/$(assessmentId)).data.candidateId == request.auth.uid &&
+          request.resource.data.size() < 10000;
+        allow update, delete: if false;
+      }
+
+      // Code Snapshots subcollection
+      match /snapshots/{snapshotId} {
+        allow read: if isAuthenticated() && (get(/databases/$(database)/documents/assessments/$(assessmentId)).data.candidateId == request.auth.uid || isRecruiter());
+        allow create: if isAuthenticated() && 
+          get(/databases/$(database)/documents/assessments/$(assessmentId)).data.candidateId == request.auth.uid &&
+          request.resource.data.size() < 250000;
+        allow update, delete: if false;
+      }
+
+      // Runs subcollection
+      match /runs/{runId} {
+        allow read: if isAuthenticated() && (get(/databases/$(database)/documents/assessments/$(assessmentId)).data.candidateId == request.auth.uid || isRecruiter());
+        allow write: if false; // Only written via server route
+      }
+    }
+
+    // Signed reports collection (Publicly readable for verification, server-write only)
+    match /reports/{reportId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User profiles & Orgs
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
+

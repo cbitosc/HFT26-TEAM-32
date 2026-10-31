@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+# Prevent python from buffering stdout/stderr and bytecode generation
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Security: create unprivileged sandbox user
+RUN groupadd -g 1001 sandboxgroup && \
+    useradd -u 1001 -g sandboxgroup -m -s /sbin/nologin sandboxuser
+
+# Install standard packages needed for candidate evaluation
+RUN pip install --no-cache-dir \
+    pytest==8.0.2 \
+    numpy==1.26.4 \
+    pandas==2.2.1 \
+    scikit-learn==1.4.1.post1
+
+# Workdir setup with restricted permissions
+WORKDIR /sandbox
+RUN chown -R sandboxuser:sandboxgroup /sandbox
+
+USER sandboxuser
+
+CMD ["python3", "-c", "print('Proctor-Forge Python Sandbox Ready')"]
+
